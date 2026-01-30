@@ -65,7 +65,7 @@ const Dashboard = () => {
   return (
     <div className="container">
       <div className="dashboard-header">
-        <h1>Welcome back, {user.name}! 👋</h1>
+        <h1>Welcome back, {user.name}!</h1>
         <Link to="/add-item" className="btn btn-primary">
           Add New Item
         </Link>

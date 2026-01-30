@@ -7,15 +7,15 @@ const ItemCard = ({ item }) => {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      'Electronics': '📱',
-      'Tools': '🔧',
-      'Books': '📚',
-      'Sports': '⚽',
-      'Kitchen': '🍳',
-      'Garden': '🌱',
-      'Other': '📦'
+      'Electronics': 'ELEC',
+      'Tools': 'TOOL',
+      'Books': 'BOOK',
+      'Sports': 'SPORT',
+      'Kitchen': 'KITCHEN',
+      'Garden': 'GARDEN',
+      'Other': 'OTHER'
     };
-    return icons[category] || '📦';
+    return icons[category] || 'OTHER';
   };
 
   const formatPrice = (price) => {
@@ -41,12 +41,12 @@ const ItemCard = ({ item }) => {
       
       <div className="item-details">
         <div className="item-owner">
-          <span className="detail-icon">👤</span>
+          <span className="detail-icon">USER</span>
           <span><strong>Owner:</strong> {item.owner.name}</span>
         </div>
         <div className="item-availability">
           <span className={`availability-badge ${item.available ? 'available' : 'unavailable'}`}>
-            <span>{item.available ? '✅' : '❌'}</span>
+            <span>{item.available ? 'AVAILABLE' : 'UNAVAILABLE'}</span>
             <span>{item.available ? 'Available' : 'Not Available'}</span>
           </span>
         </div>

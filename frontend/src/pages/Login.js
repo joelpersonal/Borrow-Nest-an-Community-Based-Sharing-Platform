@@ -89,7 +89,7 @@ const Login = () => {
           <div className="auth-footer text-center mt-20">
             <p>
               Don't have an account?{' '}
-              <Link to="/register" className="text-purple">
+              <Link to="/register" className="text-gold">
                 Sign up here
               </Link>
             </p>

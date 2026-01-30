@@ -40,7 +40,6 @@ const Home = () => {
         <div className="container">
           <div className="hero-content">
             <div className="hero-badge">
-              <span>🌟</span>
               <span>Community Sharing Platform</span>
             </div>
             <h1 className="hero-title">
@@ -68,11 +67,9 @@ const Home = () => {
             </div>
             <div className="hero-actions">
               <Link to="/ai-search" className="btn btn-primary btn-lg">
-                <span>🤖</span>
                 Try AI Search
               </Link>
               <Link to="/register" className="btn btn-outline btn-lg">
-                <span>🚀</span>
                 Join Community
               </Link>
             </div>
@@ -85,17 +82,17 @@ const Home = () => {
         <div className="container">
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">🤖</div>
+              <div className="feature-icon">AI</div>
               <h3>AI-Powered Search</h3>
               <p>Find items using natural language. Ask "I need a drill for 2 days" and get smart results.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔒</div>
+              <div className="feature-icon">SECURE</div>
               <h3>100% Free & Private</h3>
               <p>No hidden costs, no data tracking. Your privacy is protected with local AI processing.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🌱</div>
+              <div className="feature-icon">ECO</div>
               <h3>Sustainable Sharing</h3>
               <p>Reduce waste and save money by sharing items with your community members.</p>
             </div>
@@ -114,7 +111,7 @@ const Home = () => {
           <div className="search-container">
             <div className="search-box">
               <div className="search-input-wrapper">
-                <span className="search-icon">🔍</span>
+                <span className="search-icon">SEARCH</span>
                 <input
                   type="text"
                   placeholder="Search for items..."
@@ -132,7 +129,7 @@ const Home = () => {
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
-                    {category === 'All' ? '📂 All Categories' : `📁 ${category}`}
+                    {category === 'All' ? 'All Categories' : category}
                   </option>
                 ))}
               </select>
@@ -151,11 +148,10 @@ const Home = () => {
             </div>
           ) : items.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">📦</div>
+              <div className="empty-icon">EMPTY</div>
               <h3>No items found</h3>
               <p>Be the first to add an item to the community!</p>
               <Link to="/register" className="btn btn-primary">
-                <span>✨</span>
                 Get Started
               </Link>
             </div>
@@ -164,7 +160,6 @@ const Home = () => {
               <div className="items-header">
                 <h3>Found {items.length} item{items.length !== 1 ? 's' : ''}</h3>
                 <Link to="/ai-search" className="btn btn-outline">
-                  <span>🤖</span>
                   Try AI Search
                 </Link>
               </div>

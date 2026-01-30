@@ -6,7 +6,7 @@ const AuthContext = createContext();
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Set up axios defaults
+  // API configuration
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   axios.defaults.baseURL = API_URL;
 
@@ -23,18 +23,18 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
+      getCurrentUser();
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchUser = async () => {
+  const getCurrentUser = async () => {
     try {
       const response = await axios.get('/auth/me');
       setUser(response.data);
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error getting user:', error);
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
     } finally {

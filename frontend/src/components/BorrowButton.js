@@ -18,7 +18,7 @@ const BorrowButton = ({ item }) => {
         message
       });
 
-      alert('🎉 Borrow request sent successfully!');
+      alert('Borrow request sent successfully!');
       setShowModal(false);
       setBorrowDays(1);
       setMessage('');
@@ -35,7 +35,6 @@ const BorrowButton = ({ item }) => {
         onClick={() => setShowModal(true)}
         className="btn btn-primary"
       >
-        <span>🤝</span>
         Request to Borrow
       </button>
 
@@ -51,14 +50,13 @@ const BorrowButton = ({ item }) => {
                 onClick={() => setShowModal(false)}
                 className="modal-close"
               >
-                ✕
+                ×
               </button>
             </div>
 
             <form onSubmit={handleBorrowRequest} className="borrow-form">
               <div className="form-group">
                 <label className="form-label">
-                  <span>📅</span>
                   Number of Days
                 </label>
                 <input
@@ -75,7 +73,6 @@ const BorrowButton = ({ item }) => {
 
               <div className="form-group">
                 <label className="form-label">
-                  <span>💬</span>
                   Message (Optional)
                 </label>
                 <textarea
@@ -111,7 +108,6 @@ const BorrowButton = ({ item }) => {
                   onClick={() => setShowModal(false)}
                   className="btn btn-secondary"
                 >
-                  <span>❌</span>
                   Cancel
                 </button>
                 <button 
@@ -119,7 +115,6 @@ const BorrowButton = ({ item }) => {
                   disabled={loading}
                   className={`btn btn-primary ${loading ? 'loading' : ''}`}
                 >
-                  <span>🚀</span>
                   {loading ? 'Sending Request...' : 'Send Request'}
                 </button>
               </div>

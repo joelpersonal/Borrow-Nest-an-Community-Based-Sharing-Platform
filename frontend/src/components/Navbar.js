@@ -20,7 +20,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-brand">
-          🏠 Borrow Nest
+          Borrow Nest
         </Link>
         
         <div className="navbar-menu">
@@ -28,7 +28,7 @@ const Navbar = () => {
             Home
           </Link>
           <Link to="/ai-search" className="navbar-link">
-            🤖 AI Search
+            AI Search
           </Link>
           
           {user ? (
