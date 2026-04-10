@@ -5,18 +5,14 @@ let mongoServer = null;
 
 const connectDatabase = async () => {
   try {
-    // Try local MongoDB first
-    if (process.env.MONGODB_URI && process.env.MONGODB_URI.includes('localhost')) {
-      try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('Connected to local MongoDB');
-        return;
-      } catch (error) {
-        console.log('Local MongoDB not available, starting in-memory database...');
-      }
+    if (process.env.MONGODB_URI) {
+      await mongoose.connect(process.env.MONGODB_URI);
+      console.log('Connected to MongoDB Atlas/Production');
+      return;
     }
 
-    // Use in-memory MongoDB
+    // Use in-memory MongoDB as fallback for local development
+    console.log('No MONGODB_URI found, starting in-memory database...');
     mongoServer = await MongoMemoryServer.create({
       instance: {
         port: 27017,
