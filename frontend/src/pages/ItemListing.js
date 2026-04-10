@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const ItemListing = () => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: 'Electronics',
-    pricePerDay: 0
+    pricePerDay: 0,
+    rateType: 'day',
+    isGeneral: false
   });
+  const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,13 +27,32 @@ const ItemListing = () => {
     });
   };
 
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await axios.post('/items', formData);
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('description', formData.description);
+      data.append('category', formData.category);
+      data.append('pricePerDay', formData.pricePerDay);
+      data.append('rateType', formData.rateType);
+      data.append('isGeneral', formData.isGeneral);
+      if (imageFile) {
+        data.append('image', imageFile);
+      }
+
+      await axios.post('/items', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       alert('Item added successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -54,6 +78,35 @@ const ItemListing = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
+            <label className="form-label">Item Visibility</label>
+            <div style={{ display: 'flex', gap: '15px', padding: '10px 0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="isGeneral" 
+                  checked={formData.isGeneral === false} 
+                  onChange={() => setFormData({...formData, isGeneral: false})} 
+                />
+                My Community
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="isGeneral" 
+                  checked={formData.isGeneral === true} 
+                  onChange={() => setFormData({...formData, isGeneral: true})} 
+                />
+                General (Local 2km Radius)
+              </label>
+            </div>
+            {formData.isGeneral === false && !user?.activeCommunity && (
+              <small style={{ color: '#d32f2f', display: 'block' }}>⚠️ You must select a community in your dashboard to post a community-only item.</small>
+            )}
+            {formData.isGeneral === true && (!user?.location || !user?.location.coordinates || user?.location.coordinates.length < 2) && (
+              <small style={{ color: '#d32f2f', display: 'block' }}>⚠️ You must share your location on your Dashboard first to post a general item.</small>
+            )}
+          </div>
+          <div className="form-group">
             <label className="form-label">Item Title *</label>
             <input
               type="text"
@@ -64,6 +117,19 @@ const ItemListing = () => {
               className="form-input"
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Product Image (Optional)</label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="form-input"
+              style={{ padding: '0.4rem' }}
+            />
+            <small>Upload a photo to make your item stand out!</small>
           </div>
 
           <div className="form-group">
@@ -94,17 +160,31 @@ const ItemListing = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Price per Day (Optional)</label>
-            <input
-              type="number"
-              name="pricePerDay"
-              value={formData.pricePerDay}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              className="form-input"
-            />
+            <label className="form-label">Price (Optional)</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>₹</span>
+              <input
+                type="number"
+                name="pricePerDay"
+                value={formData.pricePerDay}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                placeholder="0"
+                className="form-input"
+                style={{ flex: 1 }}
+              />
+              <select
+                name="rateType"
+                value={formData.rateType}
+                onChange={handleChange}
+                className="form-select"
+                style={{ flex: 1 }}
+              >
+                <option value="hour">per hour</option>
+                <option value="day">per day</option>
+              </select>
+            </div>
             <small>Leave as 0 for free borrowing</small>
           </div>
 
@@ -128,6 +208,7 @@ const ItemListing = () => {
       </div>
     </div>
   );
+
 };
 
 export default ItemListing;

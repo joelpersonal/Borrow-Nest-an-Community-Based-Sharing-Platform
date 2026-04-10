@@ -124,6 +124,10 @@ const Register = () => {
           </form>
 
           <div className="auth-footer text-center mt-20">
+            <p className="text-secondary small mb-3">
+              Have a community join code? <br />
+              Create your account first, then use the code in the dashboard.
+            </p>
             <p>
               Already have an account?{' '}
               <Link to="/login" className="text-gold">

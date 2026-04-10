@@ -13,11 +13,15 @@ app.use(express.json());
 // Connect to database
 connectDatabase();
 
+// Serve static uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // API routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/borrow', require('./routes/borrow'));
 app.use('/api/search', require('./routes/search'));
+app.use('/api/communities', require('./routes/communities'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -32,7 +32,9 @@ router.post('/register', async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        communities: [],
+        activeCommunity: null
       }
     });
   } catch (error) {
@@ -69,7 +71,9 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        communities: user.communities,
+        activeCommunity: user.activeCommunity
       }
     });
   } catch (error) {
@@ -80,8 +84,61 @@ router.post('/login', async (req, res) => {
 // Get current user
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findById(req.userId)
+      .select('-password')
+      .populate('communities', 'name communityNumber creator');
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update user profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { name, phone, address, bankDetails } = req.body;
+    
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (bankDetails) user.bankDetails = bankDetails;
+
+    await user.save();
+    
+    // Return updated user without password but with populated communities
+    const updatedUser = await User.findById(req.userId)
+      .select('-password')
+      .populate('communities', 'name communityNumber creator');
+      
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update user location
+router.put('/location', auth, async (req, res) => {
+  try {
+    const { longitude, latitude } = req.body;
+    
+    if (longitude === undefined || latitude === undefined) {
+      return res.status(400).json({ message: 'Longitude and latitude are required' });
+    }
+
+    const user = await User.findById(req.userId);
+    user.location = {
+      type: 'Point',
+      coordinates: [longitude, latitude]
+    };
+
+    await user.save();
+    
+    res.json({ message: 'Location updated successfully', location: user.location });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

@@ -18,7 +18,7 @@ const BorrowRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Requested', 'Approved', 'Rejected', 'Returned'],
+    enum: ['Requested', 'Approved', 'Rejected', 'Paid', 'Returned'],
     default: 'Requested'
   },
   requestDate: {
@@ -27,12 +27,27 @@ const BorrowRequestSchema = new mongoose.Schema({
   },
   borrowDays: {
     type: Number,
-    required: true,
     min: 1
+  },
+  borrowDuration: {
+    type: Number,
+    min: 1
+  },
+  durationType: {
+    type: String,
+    enum: ['hours', 'days'],
+    default: 'days'
   },
   message: {
     type: String,
     trim: true
+  },
+  paymentDate: {
+    type: Date
+  },
+  totalCost: {
+    type: Number,
+    min: 0
   }
 });
 

@@ -87,6 +87,10 @@ const Login = () => {
           </form>
 
           <div className="auth-footer text-center mt-20">
+            <p className="text-secondary small mb-3">
+              Trying to join a community? <br />
+              Log in first, then enter your code in the Community Manager.
+            </p>
             <p>
               Don't have an account?{' '}
               <Link to="/register" className="text-gold">

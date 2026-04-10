@@ -1,6 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const Item = require('../models/Item');
+const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -72,7 +74,7 @@ const searchItems = (query, items) => {
     message += `Top result: "${topItem.title}" in ${topItem.category}. `;
     
     if (topItem.pricePerDay > 0) {
-      message += `Price: $${topItem.pricePerDay}/day.`;
+      message += `Price: ₹${topItem.pricePerDay}/${topItem.rateType || 'day'}.`;
     } else {
       message += `Available for free!`;
     }
@@ -82,18 +84,47 @@ const searchItems = (query, items) => {
 };
 
 // AI search endpoint
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { query } = req.body;
+    const user = await User.findById(req.userId);
+    const userActiveCommunity = user?.activeCommunity;
+
+    if (!userActiveCommunity && (!user.location || !user.location.coordinates || user.location.coordinates.length < 2)) {
+      return res.status(400).json({ 
+        message: 'Please join a community or share your location to search for items.',
+        items: []
+      });
+    }
 
     if (!query) {
       return res.status(400).json({ message: 'Search query required' });
     }
 
-    // Get available items
-    const allItems = await Item.find({ available: true })
+    const orConditions = [];
+
+    if (user.activeCommunity) {
+      orConditions.push({ community: user.activeCommunity, isGeneral: false });
+    }
+
+    if (user.location && user.location.coordinates && user.location.coordinates.length === 2) {
+      orConditions.push({
+        isGeneral: true,
+        location: {
+          $geoWithin: {
+            $centerSphere: [user.location.coordinates, 2 / 6378.1] // 2km radius
+          }
+        }
+      });
+    }
+
+    // Get available items in active community OR within 2km if general
+    const allItems = await Item.find({
+        available: true,
+        $or: orConditions
+      })
       .populate('owner', 'name')
-      .select('title description category pricePerDay available');
+      .select('title description category pricePerDay rateType available');
 
     if (allItems.length === 0) {
       return res.json({ 
@@ -111,7 +142,7 @@ router.post('/', async (req, res) => {
         title: item.title,
         description: item.description,
         category: item.category,
-        price: item.pricePerDay > 0 ? `$${item.pricePerDay}/day` : 'Free'
+        price: item.pricePerDay > 0 ? `₹${item.pricePerDay}/${item.rateType || 'day'}` : 'Free'
       }));
 
       const prompt = `Help find items for: "${query}"
@@ -124,7 +155,7 @@ Recommend the best matches and explain why they fit the request.`;
       console.log('Trying Ollama AI search...');
       
       const response = await axios.post(`${ollamaUrl}/api/generate`, {
-        model: 'llama3.2',
+        model: 'mistral',
         prompt: prompt,
         stream: false,
         options: { temperature: 0.7, max_tokens: 200 }
@@ -176,7 +207,10 @@ Recommend the best matches and explain why they fit the request.`;
     
     // Final fallback
     try {
-      const allItems = await Item.find({ available: true }).populate('owner', 'name');
+      const allItems = await Item.find({ 
+          available: true,
+          $or: orConditions
+        }).populate('owner', 'name');
       
       const basicResults = allItems.filter(item => {
         const itemText = `${item.title} ${item.description} ${item.category}`.toLowerCase();

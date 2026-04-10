@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import ItemCard from '../components/ItemCard';
 
 const Home = () => {
+  const { user, updateLocation } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,8 +14,10 @@ const Home = () => {
   const categories = ['All', 'Electronics', 'Tools', 'Books', 'Sports', 'Kitchen', 'Garden', 'Other'];
 
   useEffect(() => {
-    fetchItems();
-  }, [searchTerm, selectedCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (user) {
+      fetchItems();
+    }
+  }, [searchTerm, selectedCategory, user?.activeCommunity, user?.location]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = async () => {
     try {
@@ -30,6 +34,29 @@ const Home = () => {
     }
   };
 
+  const handleShareLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { longitude, latitude } = position.coords;
+        const res = await updateLocation(longitude, latitude);
+        if (res.success) {
+          alert('Location updated! You can now see local items nearby.');
+          fetchItems();
+        } else {
+          alert(res.message);
+        }
+      },
+      (error) => {
+        alert('Unable to retrieve your location. Please ensure location access is allowed in your browser settings.');
+      }
+    );
+  };
+
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -40,39 +67,28 @@ const Home = () => {
         <div className="container">
           <div className="hero-content">
             <div className="hero-badge">
-              <span>Community Sharing Platform</span>
+              <span className="dot"></span>
+              <span>A community of neighbors, sharing with heart.</span>
             </div>
             <h1 className="hero-title">
-              Welcome to <span className="gradient-text">Borrow Nest</span>
+              Borrow what you need. <br />
+              <span className="gradient-text">Share what you can.</span>
             </h1>
             <p className="hero-subtitle">
-              Share, borrow, and build community through sustainable item sharing. 
-              Connect with neighbors, reduce waste, and save money together.
+              We're bringing back the spirit of community. No hidden fees, no data harvesting—just local neighbors helping each other live more sustainably.
             </p>
-            <div className="hero-stats">
-              <div className="stat-item">
-                <div className="stat-number">{items.length}+</div>
-                <div className="stat-label">Items Available</div>
-              </div>
-              <div className="stat-divider"></div>
-              <div className="stat-item">
-                <div className="stat-number">100%</div>
-                <div className="stat-label">Free to Use</div>
-              </div>
-              <div className="stat-divider"></div>
-              <div className="stat-item">
-                <div className="stat-number">AI</div>
-                <div className="stat-label">Powered Search</div>
-              </div>
-            </div>
+            
             <div className="hero-actions">
               <Link to="/ai-search" className="btn btn-primary btn-lg">
-                Try AI Search
+                <span>Start Searching</span>
+                <span className="btn-icon">→</span>
               </Link>
-              <Link to="/register" className="btn btn-outline btn-lg">
-                Join Community
+              <Link to="/register" className="btn btn-secondary btn-lg">
+                <span>Join the Nest</span>
               </Link>
             </div>
+
+
           </div>
         </div>
       </section>
@@ -82,19 +98,28 @@ const Home = () => {
         <div className="container">
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">AI</div>
-              <h3>AI-Powered Search</h3>
-              <p>Find items using natural language. Ask "I need a drill for 2 days" and get smart results.</p>
+              <div className="feature-visual">
+                <div className="feature-circle"></div>
+                <span className="feature-emoji">🤖</span>
+              </div>
+              <h3>Talk to our AI</h3>
+              <p>Forget complex filters. Just tell us what you're looking for, like "I need something to cut wood this weekend," and we'll find the right tool.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">SECURE</div>
-              <h3>100% Free & Private</h3>
-              <p>No hidden costs, no data tracking. Your privacy is protected with local AI processing.</p>
+              <div className="feature-visual">
+                <div className="feature-circle"></div>
+                <span className="feature-emoji">🛡️</span>
+              </div>
+              <h3>Privacy by Design</h3>
+              <p>Your data is yours. We use local processing and secure protocols to ensure your community interactions stay between you and your neighbors.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">ECO</div>
-              <h3>Sustainable Sharing</h3>
-              <p>Reduce waste and save money by sharing items with your community members.</p>
+              <div className="feature-visual">
+                <div className="feature-circle"></div>
+                <span className="feature-emoji">🌿</span>
+              </div>
+              <h3>Rooted in Earth</h3>
+              <p>Every item borrowed is one less item manufactured. We're helping communities reduce their footprint, one shared drill at a time.</p>
             </div>
           </div>
         </div>
@@ -111,7 +136,7 @@ const Home = () => {
           <div className="search-container">
             <div className="search-box">
               <div className="search-input-wrapper">
-                <span className="search-icon">SEARCH</span>
+                <span className="search-icon">🔍</span>
                 <input
                   type="text"
                   placeholder="Search for items..."
@@ -135,6 +160,21 @@ const Home = () => {
               </select>
             </div>
           </div>
+          
+          {user && (!user.location || !user.location.coordinates || user.location.coordinates.length < 2) && (
+            <div className="location-prompt" style={{ marginTop: '20px', background: '#e0f7fa', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #00acc1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0, color: '#006064' }}>
+                📍 <strong>Tip:</strong> Share your location to instantly discover available items within a 2km radius!
+              </p>
+              <button 
+                onClick={handleShareLocation}
+                className="btn btn-secondary btn-sm"
+                style={{ backgroundColor: '#00acc1', color: 'white', border: 'none', whiteSpace: 'nowrap', marginLeft: '15px' }}
+              >
+                Share My Location
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -148,12 +188,14 @@ const Home = () => {
             </div>
           ) : items.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">EMPTY</div>
+              <div className="empty-icon">🏠</div>
               <h3>No items found</h3>
-              <p>Be the first to add an item to the community!</p>
-              <Link to="/register" className="btn btn-primary">
-                Get Started
-              </Link>
+              <p>Try sharing your location to see local items, or join a community!</p>
+              {(!user || (!user.location || !user.location.coordinates || user.location.coordinates.length < 2)) && (
+                <button onClick={handleShareLocation} className="btn btn-primary" style={{ marginTop: '10px' }}>
+                  Share Location
+                </button>
+              )}
             </div>
           ) : (
             <>

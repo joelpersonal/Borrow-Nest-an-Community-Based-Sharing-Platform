@@ -8,7 +8,14 @@ const router = express.Router();
 // Create borrow request
 router.post('/', auth, async (req, res) => {
   try {
-    const { itemId, borrowDays, message } = req.body;
+    const { itemId, borrowDays, borrowDuration, durationType, message } = req.body;
+
+    const actualDuration = borrowDuration || borrowDays;
+    const actualType = durationType || 'days';
+
+    if (!actualDuration) {
+      return res.status(400).json({ message: 'Duration is required' });
+    }
 
     const item = await Item.findById(itemId);
     if (!item) {
@@ -38,7 +45,9 @@ router.post('/', auth, async (req, res) => {
       item: itemId,
       borrower: req.userId,
       owner: item.owner,
-      borrowDays,
+      borrowDuration: actualDuration,
+      borrowDays: actualType === 'days' ? actualDuration : null, // keep mostly for history
+      durationType: actualType,
       message
     });
 
@@ -55,8 +64,8 @@ router.post('/', auth, async (req, res) => {
 router.get('/my-requests', auth, async (req, res) => {
   try {
     const requests = await BorrowRequest.find({ borrower: req.userId })
-      .populate('item', 'title category')
-      .populate('owner', 'name email')
+      .populate('item', 'title category pricePerDay rateType image')
+      .populate('owner', 'name email bankDetails')
       .sort({ requestDate: -1 });
 
     res.json(requests);
@@ -69,8 +78,8 @@ router.get('/my-requests', auth, async (req, res) => {
 router.get('/received-requests', auth, async (req, res) => {
   try {
     const requests = await BorrowRequest.find({ owner: req.userId })
-      .populate('item', 'title category')
-      .populate('borrower', 'name email')
+      .populate('item', 'title category pricePerDay rateType image')
+      .populate('borrower', 'name email bankDetails')
       .sort({ requestDate: -1 });
 
     res.json(requests);
@@ -110,10 +119,48 @@ router.put('/:id/status', auth, async (req, res) => {
       await Item.findByIdAndUpdate(request.item, { available: true });
     }
 
-    await request.populate(['item', 'borrower', 'owner'], 'title name email');
+    await request.populate([
+      { path: 'item', select: 'title category pricePerDay rateType image' },
+      { path: 'borrower', select: 'name email bankDetails' },
+      { path: 'owner', select: 'name email bankDetails' }
+    ]);
     res.json(request);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Pay for an approved request (borrower only)
+router.put('/:id/pay', auth, async (req, res) => {
+  try {
+    const { totalCost } = req.body;
+    const request = await BorrowRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (request.borrower.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (request.status !== 'Approved') {
+      return res.status(400).json({ message: 'Request must be approved before payment' });
+    }
+
+    request.status = 'Paid';
+    request.paymentDate = new Date();
+    request.totalCost = totalCost || 0;
+    
+    await request.save();
+    
+    await request.populate('item', 'title category pricePerDay rateType image');
+    await request.populate('owner', 'name email bankDetails');
+    await request.populate('borrower', 'name email bankDetails');
+
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

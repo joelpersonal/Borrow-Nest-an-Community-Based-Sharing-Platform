@@ -8,6 +8,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ItemListing from './pages/ItemListing';
 import AISearch from './pages/AISearch';
+import CommunityManager from './pages/CommunityManager';
+import ManageRequests from './pages/ManageRequests';
+import Profile from './pages/Profile';
 import './App.css';
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/add-item" element={<ProtectedRoute><ItemListing /></ProtectedRoute>} />
+              <Route path="/communities" element={<ProtectedRoute><CommunityManager /></ProtectedRoute>} />
+              <Route path="/manage-requests" element={<ProtectedRoute><ManageRequests /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/ai-search" element={<AISearch />} />
             </Routes>
           </main>

@@ -21,6 +21,37 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  communities: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Community'
+  }],
+  activeCommunity: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Community'
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  address: {
+    type: String,
+    trim: true
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],    
+    },
+    coordinates: {
+      type: [Number],     // [longitude, latitude]
+    }
+  },
+  bankDetails: {
+    upiId: { type: String, trim: true },
+    accountNumber: { type: String, trim: true },
+    ifscCode: { type: String, trim: true },
+    bankName: { type: String, trim: true }
   }
 });
 

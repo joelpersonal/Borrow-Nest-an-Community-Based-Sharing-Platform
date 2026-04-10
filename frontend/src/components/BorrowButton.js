@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 
 const BorrowButton = ({ item }) => {
   const [showModal, setShowModal] = useState(false);
-  const [borrowDays, setBorrowDays] = useState(1);
+  const [borrowDuration, setBorrowDuration] = useState(1);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isHourly = item.rateType === 'hour';
+  const durationUnit = isHourly ? 'hours' : 'days';
 
   const handleBorrowRequest = async (e) => {
     e.preventDefault();
@@ -14,13 +18,14 @@ const BorrowButton = ({ item }) => {
     try {
       await axios.post('/borrow', {
         itemId: item._id,
-        borrowDays: parseInt(borrowDays),
+        borrowDuration: parseInt(borrowDuration),
+        durationType: durationUnit,
         message
       });
 
       alert('Borrow request sent successfully!');
       setShowModal(false);
-      setBorrowDays(1);
+      setBorrowDuration(1);
       setMessage('');
     } catch (error) {
       alert(error.response?.data?.message || 'Error sending request');
@@ -38,7 +43,7 @@ const BorrowButton = ({ item }) => {
         Request to Borrow
       </button>
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -57,18 +62,18 @@ const BorrowButton = ({ item }) => {
             <form onSubmit={handleBorrowRequest} className="borrow-form">
               <div className="form-group">
                 <label className="form-label">
-                  Number of Days
+                  Number of {isHourly ? 'Hours' : 'Days'}
                 </label>
                 <input
                   type="number"
                   min="1"
-                  max="30"
-                  value={borrowDays}
-                  onChange={(e) => setBorrowDays(e.target.value)}
+                  max={isHourly ? "72" : "30"}
+                  value={borrowDuration}
+                  onChange={(e) => setBorrowDuration(e.target.value)}
                   className="form-input"
                   required
                 />
-                <small className="form-hint">Maximum 30 days</small>
+                <small className="form-hint">Maximum {isHourly ? '72 hours' : '30 days'}</small>
               </div>
 
               <div className="form-group">
@@ -92,12 +97,12 @@ const BorrowButton = ({ item }) => {
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">Duration:</span>
-                  <span className="summary-value">{borrowDays} day{borrowDays > 1 ? 's' : ''}</span>
+                  <span className="summary-value">{borrowDuration} {durationUnit}</span>
                 </div>
                 {item.pricePerDay > 0 && (
                   <div className="summary-item">
                     <span className="summary-label">Total Cost:</span>
-                    <span className="summary-value">${(item.pricePerDay * borrowDays).toFixed(2)}</span>
+                    <span className="summary-value">₹{(item.pricePerDay * borrowDuration).toFixed(2)}</span>
                   </div>
                 )}
               </div>
@@ -120,7 +125,8 @@ const BorrowButton = ({ item }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

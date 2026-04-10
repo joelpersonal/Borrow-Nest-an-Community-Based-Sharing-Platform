@@ -1,24 +1,71 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const Item = require('../models/Item');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Configure multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // Get all items
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const { category, search } = req.query;
+    const user = await User.findById(req.userId);
+    
     let query = {};
+    const orConditions = [];
+
+    if (user.activeCommunity) {
+      orConditions.push({ community: user.activeCommunity, isGeneral: false });
+    }
+
+    if (user.location && user.location.coordinates && user.location.coordinates.length === 2) {
+      orConditions.push({
+        isGeneral: true,
+        location: {
+          $geoWithin: {
+            $centerSphere: [user.location.coordinates, 2 / 6378.1] // 2km radius in radians
+          }
+        }
+      });
+    }
+
+    if (orConditions.length === 0) {
+      return res.json([]); 
+    }
+
+    query.$or = orConditions;
 
     if (category && category !== 'All') {
       query.category = category;
     }
 
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      const searchTerms = { $regex: search, $options: 'i' };
+      query = {
+        $and: [
+          query,
+          {
+            $or: [
+              { title: searchTerms },
+              { description: searchTerms }
+            ]
+          }
+        ]
+      };
     }
 
     const items = await Item.find(query)
@@ -60,16 +107,40 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create item
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
-    const { title, description, category, pricePerDay } = req.body;
+    const { title, description, category, pricePerDay, rateType, isGeneral } = req.body;
+    const user = await User.findById(req.userId);
+
+    const isGeneralBool = isGeneral === 'true' || isGeneral === true;
+    let communityId = null;
+    let itemLocation = undefined;
+
+    if (isGeneralBool) {
+      if (!user.location || !user.location.coordinates || user.location.coordinates.length < 2) {
+        return res.status(400).json({ message: 'Please set your location first to post a general item.' });
+      }
+      itemLocation = user.location;
+    } else {
+      if (!user.activeCommunity) {
+        return res.status(400).json({ message: 'Please select a community before adding items' });
+      }
+      communityId = user.activeCommunity;
+    }
+
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     const item = new Item({
       title,
       description,
       category,
       pricePerDay: pricePerDay || 0,
-      owner: req.userId
+      rateType: rateType || 'day',
+      image: imagePath,
+      owner: req.userId,
+      community: communityId,
+      isGeneral: isGeneralBool,
+      location: itemLocation
     });
 
     await item.save();
