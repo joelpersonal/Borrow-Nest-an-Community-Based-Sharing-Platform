@@ -166,16 +166,32 @@ The application includes sample data:
 
 ## 🚀 Deployment
 
-### Production Build
-```bash
-npm run build
-```
+The platform is configured for easy deployment using **Vercel** and **Render**.
+
+### Backend (Render)
+- **Repo Root**: Connect your GitHub repo.
+- **Root Directory**: `backend`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Infrastructure as Code**: The included `render.yaml` automates this.
+- **Environment Variables**:
+  - `MONGODB_URI`: Your MongoDB Atlas connection string.
+  - `JWT_SECRET`: A secure random string.
+  - `PORT`: 5000
+
+### Frontend (Vercel)
+- **Framework Preset**: `Create React App`
+- **Root Directory**: `frontend`
+- **Environment Variables**:
+  - `REACT_APP_API_URL`: Your Render backend URL + `/api` (e.g. `https://your-app.onrender.com/api`)
+- **Routing**: The included `vercel.json` handles React Router redirects.
 
 ### Environment Variables
 Set production environment variables:
 - `NODE_ENV=production`
 - `MONGODB_URI=<production-database-url>`
 - `JWT_SECRET=<secure-production-secret>`
+- `REACT_APP_API_URL=<production-backend-url>/api`
 
 ## 🤝 Contributing
 
